@@ -126,7 +126,7 @@ class PostgresWriter(object):
         default, column_type = get_type(column)
 
         if column.get('auto_increment', None):
-	    return 'bigserial'
+	    return 'bigserial NOT NULL'
                     
         return '%s%s%s' % (column_type, (default if not default == None else ''), null)
 
