@@ -126,8 +126,7 @@ class PostgresWriter(object):
         default, column_type = get_type(column)
 
         if column.get('auto_increment', None):
-            return '%s DEFAULT nextval(\'"%s_%s_seq"\'::regclass) NOT NULL' % (
-                   column_type, column['table_name'], column['name'])
+	    return 'bigserial'
                     
         return '%s%s%s' % (column_type, (default if not default == None else ''), null)
 
