@@ -116,8 +116,19 @@ class MysqlReader(object):
                 return 'decimal'
             elif data_type.startswith('double'):
                 return 'double precision'
+            elif data_type in ('point', 'geometrycollection'):
+                return 'geometry'
             else:
                 return data_type
+
+        @staticmethod
+        def _define_select(name, field_type):
+            if field_type.startswith('enum'):
+                return 'CASE `%(name)s` WHEN "" THEN NULL ELSE `%(name)s` END' % {'name': name}
+            elif field_type == 'geometry':
+                return 'CONCAT("SRID=4326;",ST_AsWKT(`%(name)s`))' % {'name': name}
+            else:
+                return '`%s`' % name
 
         def _load_columns(self):
             fields = []
@@ -146,8 +157,7 @@ class MysqlReader(object):
                     'auto_increment': res[6] == 'auto_increment',
                     'default': res[5] if not res[5] == 'NULL' else None,
                     'comment': comment,
-                    'select': '`%s`' % name if not field_type.startswith('enum') else
-                        'CASE `%(name)s` WHEN "" THEN NULL ELSE `%(name)s` END' % {'name': name},
+                    'select': self._define_select(name, field_type),
                     }
                 fields.append(desc)
 

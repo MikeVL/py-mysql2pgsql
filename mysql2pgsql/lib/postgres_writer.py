@@ -120,6 +120,10 @@ class PostgresWriter(object):
                 if default:
                     default = ' DEFAULT ARRAY[%s]::text[]' % ','.join(QuotedString(v).getquoted() for v in re.search(r"'(.*)'", default).group(1).split(','))
                 return default, 'text[]'
+            elif column['type'] == 'point':
+                return default, 'geometry(point)'
+            elif column['type'] == 'geometry':
+                return default, 'geometry'
             else:
                 raise Exception('unknown %s' % column['type'])
 
