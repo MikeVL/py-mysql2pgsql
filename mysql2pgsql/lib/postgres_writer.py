@@ -184,7 +184,7 @@ class PostgresWriter(object):
                         if row[index].tzinfo:
                             row[index] = row[index].astimezone(self.tz).isoformat()
                         else:
-                            row[index] = datetime(*row[index].timetuple()[:6], tzinfo=self.tz).isoformat()
+                            row[index] = self.tz.localize(datetime(*row[index].timetuple()[:6])).isoformat()
                     except Exception as e:
                         print e.message
                 else:
