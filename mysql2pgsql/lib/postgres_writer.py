@@ -15,6 +15,7 @@ class PostgresWriter(object):
     def __init__(self, tz=False, index_prefix=''):
         self.column_types = {}
         self.index_prefix = index_prefix
+        self.reader_timezone = timezone('Europe/Moscow')
         if tz:
             self.tz = timezone('UTC')
             self.tz_offset = '+00:00'
@@ -131,21 +132,21 @@ class PostgresWriter(object):
 
         if column.get('auto_increment', None):
             return 'bigint DEFAULT nextval(\'"%s_%s_seq"\'::regclass) NOT NULL' % (column['table_name'], column['name'])
-                    
+
         return '%s%s%s' % (column_type, (default if not default == None else ''), null)
 
     def table_comments(self, table):
         comments = StringIO()
-        if table.comment: 
+        if table.comment:
           comments.write(self.table_comment(table.name, table.comment))
         for column in table.columns:
           comments.write(self.column_comment(table.name, column))
-        return comments.getvalue() 
+        return comments.getvalue()
 
     def column_comment(self, tablename, column):
-      if column['comment']: 
+      if column['comment']:
         return (' COMMENT ON COLUMN %s.%s is %s;' % ( tablename, column['name'], QuotedString(column['comment']).getquoted()))
-      else: 
+      else:
         return ''
 
     def table_comment(self, tablename, comment):
@@ -184,7 +185,7 @@ class PostgresWriter(object):
                         if row[index].tzinfo:
                             row[index] = row[index].astimezone(self.tz).isoformat()
                         else:
-                            row[index] = self.timezone('Europe/Moscow').localize(datetime(*row[index].timetuple()[:6])).isoformat()
+                            row[index] = self.reader_timezone.localize(datetime(*row[index].timetuple()[:6])).isoformat()
                     except Exception as e:
                         print e.message
                 else:
@@ -252,7 +253,7 @@ class PostgresWriter(object):
         if primary_index:
             index_sql.append('ALTER TABLE "%(table_name)s" ADD CONSTRAINT "%(index_name)s_pkey" PRIMARY KEY(%(column_names)s);' % {
                     'table_name': table.name,
-                    'index_name': '%s%s_%s' % (index_prefix, table.name, 
+                    'index_name': '%s%s_%s' % (index_prefix, table.name,
                                         '_'.join(primary_index[0]['columns'])),
                     'column_names': ', '.join('"%s"' % col for col in primary_index[0]['columns']),
                     })
