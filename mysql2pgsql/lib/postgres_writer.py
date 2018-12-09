@@ -4,6 +4,7 @@ import re
 from cStringIO import StringIO
 from datetime import datetime, date, timedelta
 
+from psycopg2.extras import json
 from psycopg2.extensions import QuotedString, Binary, AsIs
 from pytz import timezone
 
@@ -172,6 +173,8 @@ class PostgresWriter(object):
                     row[index] = '1970-01-01 00:00:00'
             elif 'bit' in column_type:
                 row[index] = bin(ord(row[index]))[2:]
+            elif column_type == 'json':
+                row[index] = json.dumps(json.loads(row[index])).replace('\\', r'\\').replace('\n', r'\n').replace('\t', r'\t').replace('\r', r'\r').replace('\0', '')
             elif isinstance(row[index], (str, unicode, basestring)):
                 if column_type == 'bytea':
                     row[index] = Binary(row[index]).getquoted()[1:-8] if row[index] else row[index]
